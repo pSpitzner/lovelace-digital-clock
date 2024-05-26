@@ -32,7 +32,7 @@ const plugins = [
 
 export default [
   {
-    input: 'src/DigitalClock.ts',
+    input: 'src/RetroClock.ts',
     output: {
       dir: 'dist',
       format: 'es',

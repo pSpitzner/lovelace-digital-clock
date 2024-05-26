@@ -6,7 +6,7 @@ import { terser } from "rollup-plugin-terser";
 import json from '@rollup/plugin-json';
 
 export default {
-  input: ["src/DigitalClock.ts"],
+  input: ["src/RetroClock.ts"],
   output: {
     dir: "./dist",
     format: "es",

@@ -5,11 +5,12 @@ import {DateTime} from 'luxon';
 import {HomeAssistant} from 'custom-card-helpers';
 
 import {CARD_VERSION} from './const';
-import IDigitalClockConfig from './IDigitalClockConfig';
+import IRetroClockConfig from './IRetroClockConfig';
+import { unsafeHTML } from 'lit-html/directives/unsafe-html';
 
 /* eslint no-console: 0 */
 console.info(
-    `%c  Digital-Clock \n%c  Version ${CARD_VERSION}    `,
+    `%c  Retro-Clock \n%c  Version ${CARD_VERSION}    `,
     'color: orange; font-weight: bold; background: black',
     'color: white; font-weight: bold; background: dimgray',
 );
@@ -17,21 +18,21 @@ console.info(
 // This puts your card into the UI card picker dialog
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
-    type: 'digital-clock',
-    name: 'DigitalClock',
-    description: 'A digital clock component',
+    type: 'retro-clock',
+    name: 'RetroClock',
+    description: 'A retrostyled clock component',
 });
 
-@customElement('digital-clock')
-export class DigitalClock extends LitElement {
+@customElement('retro-clock')
+export class RetroClock extends LitElement {
     @property({attribute: false}) public hass!: HomeAssistant;
     @state() private _firstLine = '';
     @state() private _secondLine = '';
-    @state() private _config?: IDigitalClockConfig;
+    @state() private _config?: IRetroClockConfig;
     @state() private _interval = 1000;
     private _intervalId?: number;
 
-    public setConfig(config: IDigitalClockConfig): void {
+    public setConfig(config: IRetroClockConfig): void {
         this._config = {...config};
         if (this._config.timeFormat)
             this._config.firstLineFormat = this._config.timeFormat;
@@ -79,6 +80,17 @@ export class DigitalClock extends LitElement {
         this._intervalId = undefined;
     }
 
+    private _formatTime(dateString: string, blinkDividers=false): string {
+        const placeholder = dateString.replace(/\d/g, '8').replace(/[a-zA-Z]/g, 'B');
+        const placeholderDiv = `<div class="placeholder">${placeholder}</div>`;
+        let timeDiv = `<div class="foreground">${dateString}</div>`;
+
+        if (blinkDividers)
+            timeDiv = timeDiv.replace(/:/g, '<span class="blink">:</span>');
+
+        return `${timeDiv}${placeholderDiv}`;
+    }
+
     private async _updateDateTime(): Promise<void> {
         const timeZone = this._config?.timeZone ?? this.hass?.config?.time_zone;
         const locale = this._config?.locale ?? this.hass?.locale?.language;
@@ -113,6 +125,9 @@ export class DigitalClock extends LitElement {
         else
             secondLine = dateTime.toLocaleString(this._config?.secondLineFormat ?? {weekday: 'short', day: '2-digit', month: 'short'});
 
+        firstLine = this._formatTime(firstLine, this._config?.blinkDividers);
+        secondLine = this._formatTime(secondLine);
+
         if (firstLine !== this._firstLine)
             this._firstLine = firstLine;
         if (secondLine !== this._secondLine)
@@ -126,33 +141,72 @@ export class DigitalClock extends LitElement {
 
     protected render(): TemplateResult | void {
         return html`
-            <ha-card>
-                <span class="first-line">${this._firstLine}</span>
-                <span class="second-line">${this._secondLine}</span>
-            </ha-card>
+          <ha-card>
+            <div class="line first-line">
+              ${unsafeHTML(this._firstLine)}
+            </div>
+            <div class="line second-line">
+              ${unsafeHTML(this._secondLine)}
+            </div>
+          </ha-card>
         `;
     }
 
+
     static get styles(): CSSResult {
+        // we should probably integrate the fonts somehow:
+        // https://community.home-assistant.io/t/use-ttf-in-lovelace/143495/33
         return css`
           ha-card {
-            text-align: center;
-            font-weight: bold;
-            padding: 8px 0;
+            padding-right: 8px;
+            text-align: right;
+            font-family: 'digital-7', sans-serif;
           }
 
-          ha-card > span {
-            display: block;
+          .line {
+            position: relative;
+          }
+          .line .foreground {
+            display: inline-block;
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+          }
+          .line .placeholder {
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            opacity: 0.1;
           }
 
           .first-line {
-            font-size: 2.8em;
+            font-size: 2em;
             line-height: 1em;
           }
 
           .second-line {
-            font-size: 1.6em;
+            font-size: 1em;
             line-height: 1em;
+          }
+
+          @keyframes blink {
+            0%,
+            49% {
+              opacity: 1;
+            }
+            50%,
+            100% {
+              opacity: 0;
+            }
+          }
+
+          .blink {
+            animation: blink 2s steps(1) infinite;
           }
         `;
     }

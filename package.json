@@ -1,7 +1,7 @@
 {
-  "name": "lovelace-digital-clock",
+  "name": "lovelace-retro-clock",
   "version": "1.2.4",
-  "description": "Home Assistant Digital Clock",
+  "description": "Home Assistant retro Clock",
   "keywords": [
     "home-assistant",
     "homeassistant",
@@ -10,7 +10,7 @@
     "lovelace",
     "custom-cards"
   ],
-  "module": "dist/DigitalClock.js",
+  "module": "dist/RetroClock.js",
   "repository": "git@github.com:wassy92x/lovelace-digital-clock.git",
   "author": "Fabian Wassenhoven <info@it-creators.de>",
   "license": "MIT",
