@@ -1,7 +1,7 @@
 {
   "name": "lovelace-retro-clock",
-  "version": "1.2.4",
-  "description": "Home Assistant retro Clock",
+  "version": "1.2.5",
+  "description": "Home Assistant Retro Clock",
   "keywords": [
     "home-assistant",
     "homeassistant",

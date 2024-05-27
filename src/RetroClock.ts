@@ -86,6 +86,11 @@ export class RetroClock extends LitElement {
     const now = DateTime.local();
     const currentTime = now.hour * 3600 + now.minute * 60 + now.second;
 
+    function hexToRgb(hex: string): number[] {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [0, 0, 0];
+    }
+
     // Define your key times and their colors here.
     // Times are in seconds since midnight.
     const keyTimes = [
@@ -251,10 +256,4 @@ export class RetroClock extends LitElement {
       }
     `;
   }
-}
-
-
-function hexToRgb(hex: string): number[] {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : [0, 0, 0];
 }
