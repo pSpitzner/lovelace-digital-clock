@@ -94,13 +94,15 @@ export class RetroClock extends LitElement {
     // Define your key times and their colors here.
     // Times are in seconds since midnight.
     const keyTimes = [
-      { time: 0 * 3600, color: hexToRgb('#F18C8E') },
-      { time: 4 * 3600, color: hexToRgb('#F0B7A4') },
-      { time: 7 * 3600, color: hexToRgb('#F1D1B5') },
-      { time: 12 * 3600, color: hexToRgb('#FFF') },
-      { time: 18 * 3600, color: hexToRgb('#8CB4C5') },
-      { time: 20 * 3600, color: hexToRgb('#548EA7') },
-      { time: 22 * 3600, color: hexToRgb('#998BA8') },
+      { time: 0 * 3600, opacity: 1.0, color: hexToRgb('#F18C8E') },
+      { time: 4 * 3600, opacity: 1.0, color: hexToRgb('#F0B7A4') },
+      { time: 7 * 3600, opacity: 1.0, color: hexToRgb('#F1D1B5') },
+      { time: 10 * 3600, opacity: 1.0, color: hexToRgb('#FFF') },
+      { time: 16 * 3600, opacity: 1.0, color: hexToRgb('#FFF') },
+      { time: 18 * 3600, opacity: 1.0, color: hexToRgb('#8CB4C5') },
+      { time: 20 * 3600, opacity: 1.0, color: hexToRgb('#548EA7') },
+      { time: 22 * 3600, opacity: 1.0, color: hexToRgb('#998BA8') },
+      { time: 24 * 3600, opacity: 1.0, color: hexToRgb('#F18C8E') },
     ];
 
     // Find the two key times that the current time falls between.
@@ -112,8 +114,42 @@ export class RetroClock extends LitElement {
     // Interpolate between the colors of the two key times.
     const t = (currentTime - keyTimes[i].time) / (keyTimes[i + 1].time - keyTimes[i].time);
     const color = keyTimes[i].color.map((start, j) => Math.floor(start + t * (keyTimes[i + 1].color[j] - start)));
+    const opacity = keyTimes[i].opacity + t * (keyTimes[i + 1].opacity - keyTimes[i].opacity);
 
-    return [color[0], color[1], color[2]];
+    return [color[0], color[1], color[2], opacity];
+  }
+
+  private _timeToOpacity(): number {
+    const now = DateTime.local();
+    const currentTime = now.hour * 3600 + now.minute * 60 + now.second;
+
+    // Define your key times and their colors here.
+    // Times are in seconds since midnight.
+    const keyTimes = [
+      { time: 0 * 3600, opacity: 0.2 },
+      { time: 7 * 3600, opacity: 0.2 },
+      { time: 8 * 3600, opacity: 1.0 },
+      { time: 19 * 3600, opacity: 1.0 },
+      { time: 20 * 3600, opacity: 0.2 },
+      { time: 24 * 3600, opacity: 0.2 },
+    ];
+
+    // Find the two key times that the current time falls between.
+    let i = 0;
+    while (currentTime >= keyTimes[i + 1].time) {
+      i++;
+    }
+
+    // Interpolate between the colors of the two key times.
+    const t = (currentTime - keyTimes[i].time) / (keyTimes[i + 1].time - keyTimes[i].time);
+    return keyTimes[i].opacity + t * (keyTimes[i + 1].opacity - keyTimes[i].opacity);
+  }
+
+  private _normalizedTime(): number {
+    // simple helper that we assign to a css variable
+    // 0 at 00:00, 0.5 at 12:00 and 1 at 24:00
+    const now = DateTime.local();
+    return (now.hour * 3600 + now.minute * 60 + now.second) / 86400;
   }
 
   private _formatTime(dateString: string, blinkDividers = false): string {
@@ -177,8 +213,18 @@ export class RetroClock extends LitElement {
 
   protected render(): TemplateResult | void {
     const color = this._timeToRgb();
+    const normalizedtime = this._normalizedTime();
+    const opacity = this._timeToOpacity();
+
+    // we do not use all the css variables, but a user might do so with cardmod!
+    const root = document.documentElement;
+    root.style.setProperty('--retro-clock-text-color', `rgb(${color})`);
+    root.style.setProperty('--retro-clock-glow-color', `rgba(${color}, 0.4)`);
+    root.style.setProperty('--retro-clock-norm-time', `${normalizedtime}`);
+    root.style.setProperty('--retro-clock-time-opacity', `${opacity}`);
+
     return html`
-      <ha-card style="--text-color: rgb(${color}); --glow-color: rgba(${color}, 0.4);">
+      <ha-card>
         <div class="line first-line">
           ${unsafeHTML(this._firstLine)}
         </div>
@@ -210,9 +256,12 @@ export class RetroClock extends LitElement {
         left: 0;
         right: 0;
         z-index: 100;
-        color: var(--text-color);
-        text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color), 0 0 15px var(--glow-color),
-          0 0 20px var(--glow-color);
+        color: var(--retro-clock-text-color);
+        text-shadow:
+          0 0 5px var(--retro-clock-glow-color),
+          0 0 10px var(--retro-clock-glow-color),
+          0 0 15px var(--retro-clock-glow-color),
+          0 0 20px var(--retro-clock-glow-color);
       }
 
       .line .placeholder {
@@ -223,7 +272,7 @@ export class RetroClock extends LitElement {
         right: 0;
         z-index: 50;
         opacity: 0.15;
-        color: var(--text-color);
+        color: var(--retro-clock-text-color);
       }
 
       .line .separator {
